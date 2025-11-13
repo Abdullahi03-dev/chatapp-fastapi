@@ -1,0 +1,138 @@
+/* --- NAVBAR COMPONENT --- */
+.navbar-component {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* main container */
+  .navbar-component .navbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    height: 70px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  /* logo */
+  .navbar-component .navbar__logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+  }
+  
+  /* links */
+  .navbar-component .navbar__links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .navbar-component .navbar__links a {
+    text-decoration: none;
+    color: #0f172a;
+    font-weight: 400;
+    transition: color 0.3s ease;
+    margin: 0 8px;
+  }
+  
+  /* .navbar-component .navbar__links a:hover {
+    color: #0ea5a4;
+  }
+   */
+  /* toggle icon (hamburger) */
+  .navbar-component .navbar__toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    cursor: pointer;
+  }
+  
+  .navbar-component .navbar__toggle span {
+    width: 25px;
+    height: 2.5px;
+    background: #0f172a;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+  }
+  
+  /* animate into X */
+  .navbar-component .navbar__toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translateY(8px);
+  }
+  .navbar-component .navbar__toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+  .navbar-component .navbar__toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translateY(-8px);
+  }
+  
+  .signupbutton{
+    margin: 0 7px;
+    padding: 8px 9px;
+    background-color: #f76d30;
+    border-radius: 13px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .signupbutton:hover{
+    color: black;
+  }
+  .navCta{
+    margin-left: 3rem;
+    width: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  /* --- MOBILE --- */
+  @media (max-width: 768px) {
+    .navbar-component .navbar__links {
+      position: absolute;
+      top: 70px;
+      right: 0;
+      background: #ffffff;
+      flex-direction: column;
+      width: 100%;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 0;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+      transform: translateY(-200%);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+  
+    .navbar-component .navbar__links.open {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  
+    .navbar-component .navbar__toggle {
+      display: flex;
+    }
+    .signupbutton{
+        margin-bottom: 10px;
+    }
+    .navCta{
+        flex-direction: column;
+        justify-content: center;
+        margin:  0;
+    }
+    .loginButton{
+        margin-top: 15px;
+    }
+  }
+  
