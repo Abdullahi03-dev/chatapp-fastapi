@@ -7,46 +7,55 @@ import feature3 from "../assets/image/feature3.png";
 const Features = () => {
   const data = [
     {
-      name: "Fast And Reliable",
-      note: "Experience lightning-speed conversations powered by WebSockes for smooth, instant messaging",
+      name: "Fast & Reliable",
+      note: "Lightning-speed conversations powered by WebSockets for smooth, instant messaging.",
       Image: feature1,
     },
     {
       name: "Unlimited Storage",
-      note: "Never lose a message again your chats are safely stored and always available whenn you return",
+      note: "Never lose a message again. Your chats are safely stored and always available.",
       Image: feature2,
     },
     {
       name: "Seamless Sync",
-      note: "Stay connected across all your devices instantly messages appear in real time everywhwere",
+      note: "Stay connected across all your devices. Messages appear in real-time everywhere.",
       Image: feature3,
     },
   ];
 
-  // Animation variants for staggered fade-ins
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.25 },
+      transition: { staggerChildren: 0.2 },
     },
   };
 
   const item = {
-    hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
+    hidden: { opacity: 0, y: 30 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
   };
 
   return (
-    <>
-      <section className="pt-10 pb-3 px-6 md:px-20 md:pt-0">
-        <h1 className="text-center text-3xl font-bold underline mb-6 bg-gradient-to-r from-[#f37925] to-[#fbc02d] text-transparent bg-clip-text pt-6 md:pt-0 text-4xl">
-          Features
-        </h1>
-        <p className="mx-auto mt-2 text-[18px] text-center font-light pb-6 md:pb-15 md:w-[450px] word-wrap">Lorem ipsitae voluptatum laborum porro optio alias delectus libero! Atque, excepturi debitis.</p>
+    <section id="features" className="py-16 sm:py-20 px-4 sm:px-6 md:px-12 lg:px-20 bg-white">
+      <div className="max-w-6xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#f37925]">
+            Features
+          </h2>
+          <p className="mt-4 text-gray-600 text-base sm:text-lg max-w-md mx-auto">
+            Everything you need for seamless communication with your friends and team.
+          </p>
+        </motion.div>
 
         <motion.div
-          className="flex flex-col md:flex-row md:flex-wrap items-center justify-center gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
           variants={container}
           initial="hidden"
           whileInView="show"
@@ -56,24 +65,26 @@ const Features = () => {
             <motion.div
               key={index}
               variants={item}
-              className="bg-background/80 backdrop-blur-md w-[350px] h-[340px] px-2.5 my-2.5 shadow-md bg-white/20 rounded-2xl flex flex-col items-center justify-center hover:scale-105 transition-transform duration-300"
+              className="bg-white border border-gray-100 p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col items-center text-center"
             >
               <motion.img
                 src={each.Image}
                 alt={each.name}
-                className="w-[200px] h-[200px] block mx-auto"
-                whileHover={{ scale: 1.05 }}
+                className="w-32 h-32 sm:w-40 sm:h-40 object-contain"
+                whileHover={{ scale: 1.1, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 200 }}
               />
-              <h3 className="text-center text-2xl font-medium mt-1.5">
+              <h3 className="text-xl sm:text-2xl font-semibold mt-4 text-gray-800">
                 {each.name}
               </h3>
-              <p className="text-center mt-2.5">{each.note}</p>
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
+                {each.note}
+              </p>
             </motion.div>
           ))}
         </motion.div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };
 
