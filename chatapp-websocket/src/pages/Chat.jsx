@@ -28,6 +28,10 @@ export default function Chat() {
   
   // image upload loading state
   const [isUploading, setIsUploading] = useState(false);
+  
+  // connection status
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true);
 
   const backend = import.meta.env.VITE_API_URL || "https://chatapp-fastapi-6pg7.onrender.com";
   const wsBackend = import.meta.env.VITE_WS_URL || "wss://chatapp-fastapi-6pg7.onrender.com";
@@ -43,31 +47,50 @@ export default function Chat() {
       .catch(console.error);
   }, [activeRoom, username]);
 
-  // WebSocket setup
+  // WebSocket setup with reconnection
   useEffect(() => {
     // close previous socket if any
     if (ws.current) {
       try { ws.current.close(); } catch (e) {}
     }
 
-    const socket = new WebSocket(`${wsBackend}/chat/ws/${activeRoom}`);
-    ws.current = socket;
+    setIsConnecting(true);
+    setIsConnected(false);
 
-    socket.onopen = () => console.log("WS connected to", activeRoom);
+    const connectWebSocket = () => {
+      const socket = new WebSocket(`${wsBackend}/chat/ws/${activeRoom}`);
+      ws.current = socket;
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((prev) => [...prev, { ...data, isOwn: data.user === username }]);
+      socket.onopen = () => {
+        console.log("WS connected to", activeRoom);
+        setIsConnected(true);
+        setIsConnecting(false);
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        setMessages((prev) => [...prev, { ...data, isOwn: data.user === username }]);
+      };
+
+      socket.onclose = () => {
+        console.log("WS closed");
+        setIsConnected(false);
+        setIsConnecting(false);
+      };
+
+      socket.onerror = (err) => {
+        console.log("WS error", err);
+        setIsConnected(false);
+        setIsConnecting(false);
+      };
     };
 
-    socket.onclose = () => console.log("WS closed");
-
-    socket.onerror = (err) => console.log("WS error", err);
+    connectWebSocket();
 
     return () => {
-      socket.close();
+      if (ws.current) ws.current.close();
     };
-  }, [activeRoom, username]);
+  }, [activeRoom, username, wsBackend]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -223,13 +246,32 @@ export default function Chat() {
             </button>
             <currentRoom.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#f37925]" />
             <h1 className="text-base sm:text-lg font-bold truncate">{currentRoom.name}</h1>
+            {/* Connection status */}
+            <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500 animate-pulse' : 'bg-red-500'}`} title={isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Disconnected'} />
           </div>
           <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Signed in as <b>{username}</b></div>
         </header>
 
         {/* MESSAGES */}
         <div className="flex-1 px-3 py-3 sm:p-4 overflow-y-auto flex flex-col">
-          {messages.length === 0 && (
+          {/* Connection status banner */}
+          {!isConnected && !isConnecting && (
+            <div className="bg-red-100 text-red-700 px-4 py-3 rounded-lg mb-3 text-center text-sm">
+              <p>Disconnected from server. The server might be waking up.</p>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="mt-2 bg-red-500 text-white px-4 py-1 rounded-full text-xs hover:bg-red-600"
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
+          {isConnecting && (
+            <div className="bg-yellow-100 text-yellow-700 px-4 py-3 rounded-lg mb-3 text-center text-sm">
+              <p>Connecting to server... (may take ~30s if server is sleeping)</p>
+            </div>
+          )}
+          {messages.length === 0 && isConnected && (
             <div className="flex-1 flex items-center justify-center text-gray-400">
               <p>No messages yet. Start the conversation!</p>
             </div>
