@@ -29,7 +29,8 @@ export default function Chat() {
   // image upload loading state
   const [isUploading, setIsUploading] = useState(false);
 
-  const backend = "http://127.0.0.1:8000";
+  const backend = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+  const wsBackend = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000";
 
   // Fetch history when room changes
   useEffect(() => {
@@ -49,7 +50,7 @@ export default function Chat() {
       try { ws.current.close(); } catch (e) {}
     }
 
-    const socket = new WebSocket(`ws://127.0.0.1:8000/chat/ws/${activeRoom}`);
+    const socket = new WebSocket(`${wsBackend}/chat/ws/${activeRoom}`);
     ws.current = socket;
 
     socket.onopen = () => console.log("WS connected to", activeRoom);
