@@ -212,51 +212,56 @@ export default function Chat() {
       </aside>
 
       {/* CHAT SECTION */}
-      <div className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex items-center px-4 md:px-6 justify-between">
-          <div className="flex items-center gap-3">
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-14 sm:h-16 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex items-center px-3 sm:px-6 justify-between shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button 
               onClick={() => setSidebarOpen(true)} 
               className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <currentRoom.icon className="w-6 h-6 text-[#f37925]" />
-            <h1 className="text-lg font-bold">{currentRoom.name}</h1>
+            <currentRoom.icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#f37925]" />
+            <h1 className="text-base sm:text-lg font-bold truncate">{currentRoom.name}</h1>
           </div>
-          <div className="text-sm text-gray-600 hidden sm:block">Signed in as <b>{username}</b></div>
+          <div className="text-xs sm:text-sm text-gray-600 hidden sm:block">Signed in as <b>{username}</b></div>
         </header>
 
         {/* MESSAGES */}
-        <div className="flex-1 p-4 overflow-y-auto flex flex-col">
+        <div className="flex-1 px-3 py-3 sm:p-4 overflow-y-auto flex flex-col">
+          {messages.length === 0 && (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <p>No messages yet. Start the conversation!</p>
+            </div>
+          )}
           {messages.map((msg, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.isOwn ? "justify-end" : "justify-start"}`}
+              className={`flex ${msg.isOwn ? "justify-end" : "justify-start"} mb-2`}
             >
               <div
-                className={`px-4 py-2 mb-2 max-w-[75%] rounded-2xl ${
+                className={`px-3 py-2 max-w-[85%] sm:max-w-[75%] rounded-2xl ${
                   msg.isOwn
                     ? "bg-[#f37925] text-white rounded-br-sm"
                     : "bg-gray-200 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 rounded-bl-sm"
                 }`}
               >
-                <p className="text-sm font-semibold mb-1">{msg.isOwn ? "You" : msg.user}</p>
+                <p className="text-xs sm:text-sm font-semibold mb-1">{msg.isOwn ? "You" : msg.user}</p>
 
                 {/* Render by type */}
                 {msg.type === "image" && (
-                  <img src={msg.content} alt="sent" className="max-w-[200px] md:max-w-[280px] rounded-md" />
+                  <img src={msg.content} alt="sent" className="max-w-[150px] sm:max-w-[200px] md:max-w-[280px] rounded-md" />
                 )}
 
                 {msg.type === "audio" && (
-                  <audio controls src={msg.content} className="w-48" />
+                  <audio controls src={msg.content} className="w-36 sm:w-48 h-10" />
                 )}
 
-                {(!msg.type || msg.type === "text") && <p>{msg.content}</p>}
+                {(!msg.type || msg.type === "text") && <p className="text-sm sm:text-base break-words">{msg.content}</p>}
 
-                <p className="text-xs opacity-70 mt-1 text-right">
+                <p className="text-[10px] sm:text-xs opacity-70 mt-1 text-right">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
               </div>
@@ -266,19 +271,19 @@ export default function Chat() {
         </div>
 
         {/* INPUT + MEDIA UPLOAD */}
-        <form onSubmit={sendText} className="p-4 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
-          <div className="flex gap-2 max-w-4xl mx-auto w-full items-center">
+        <form onSubmit={sendText} className="p-2 sm:p-4 border-t border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shrink-0">
+          <div className="flex gap-1.5 sm:gap-2 max-w-4xl mx-auto w-full items-center">
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 rounded-full border px-4 py-2 bg-transparent focus:ring-2 focus:ring-[#f37925]"
+              className="flex-1 min-w-0 rounded-full border px-3 sm:px-4 py-2 text-sm sm:text-base bg-gray-50 dark:bg-neutral-700 focus:ring-2 focus:ring-[#f37925] focus:outline-none"
             />
 
             {/* Image input */}
-            <label className="rounded-full bg-white border p-2 cursor-pointer">
+            <label className="shrink-0 rounded-full bg-gray-100 dark:bg-neutral-700 p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors">
               <input type="file" accept="image/*" onChange={handleImageSelected} className="hidden" />
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M3 19c0 1.054.895 2 2 2h14" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M8.5 11.5l2.5 3.01L14.5 11" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none"><path d="M21 15V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M3 19c0 1.054.895 2 2 2h14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M8.5 11.5l2.5 3.01L14.5 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
             </label>
 
             {/* Audio record button */}
@@ -286,24 +291,24 @@ export default function Chat() {
               <button 
                 type="button" 
                 onClick={startRecording} 
-                className="rounded-full bg-white border p-2 hover:bg-gray-100"
+                className="shrink-0 rounded-full bg-gray-100 dark:bg-neutral-700 p-2 hover:bg-gray-200 dark:hover:bg-neutral-600 transition-colors"
                 title="Record audio"
               >
-                🎤
+                <span className="text-lg">🎤</span>
               </button>
             ) : (
               <button 
                 type="button" 
                 onClick={stopRecording} 
-                className="rounded-full bg-red-500 text-white p-2 animate-pulse"
+                className="shrink-0 rounded-full bg-red-500 text-white p-2 animate-pulse"
                 title="Stop recording"
               >
-                ⏹️
+                <span className="text-lg">⏹️</span>
               </button>
             )}
 
-            <button type="submit" className="rounded-full bg-[#f37925] text-white p-3">
-              <Send className="w-5 h-5" />
+            <button type="submit" className="shrink-0 rounded-full bg-[#f37925] hover:bg-[#e06820] text-white p-2.5 sm:p-3 transition-colors">
+              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </form>
