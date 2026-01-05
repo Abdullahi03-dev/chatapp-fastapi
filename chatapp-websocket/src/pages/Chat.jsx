@@ -47,8 +47,12 @@ export default function Chat() {
       .catch(console.error);
   }, [activeRoom, username]);
 
-  // WebSocket setup with reconnection
+  // WebSocket setup with auto-retry
   useEffect(() => {
+    let retryCount = 0;
+    const maxRetries = 5;
+    let retryTimeout = null;
+
     // close previous socket if any
     if (ws.current) {
       try { ws.current.close(); } catch (e) {}
@@ -58,6 +62,7 @@ export default function Chat() {
     setIsConnected(false);
 
     const connectWebSocket = () => {
+      console.log(`Attempting WebSocket connection (attempt ${retryCount + 1})...`);
       const socket = new WebSocket(`${wsBackend}/chat/ws/${activeRoom}`);
       ws.current = socket;
 
@@ -65,6 +70,7 @@ export default function Chat() {
         console.log("WS connected to", activeRoom);
         setIsConnected(true);
         setIsConnecting(false);
+        retryCount = 0; // reset on successful connection
       };
 
       socket.onmessage = (event) => {
@@ -72,23 +78,35 @@ export default function Chat() {
         setMessages((prev) => [...prev, { ...data, isOwn: data.user === username }]);
       };
 
-      socket.onclose = () => {
-        console.log("WS closed");
+      socket.onclose = (e) => {
+        console.log("WS closed", e.code, e.reason);
         setIsConnected(false);
-        setIsConnecting(false);
+        
+        // Auto-retry if not intentionally closed
+        if (retryCount < maxRetries) {
+          retryCount++;
+          const delay = Math.min(1000 * retryCount, 5000); // 1s, 2s, 3s, 4s, 5s
+          console.log(`Retrying in ${delay}ms...`);
+          setIsConnecting(true);
+          retryTimeout = setTimeout(connectWebSocket, delay);
+        } else {
+          setIsConnecting(false);
+        }
       };
 
       socket.onerror = (err) => {
         console.log("WS error", err);
-        setIsConnected(false);
-        setIsConnecting(false);
       };
     };
 
     connectWebSocket();
 
     return () => {
-      if (ws.current) ws.current.close();
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (ws.current) {
+        ws.current.onclose = null; // prevent retry on intentional close
+        ws.current.close();
+      }
     };
   }, [activeRoom, username, wsBackend]);
 
