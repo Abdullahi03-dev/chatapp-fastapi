@@ -48,6 +48,12 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str, db: Session =
     try:
         while True:
             data = await websocket.receive_json()
+            
+            # Handle ping keepalive
+            if data.get("type") == "ping":
+                await websocket.send_json({"type": "pong"})
+                continue
+            
             username = data.get("user", "Anonymous")
             message_text = data.get("content", "")
             mtype = data.get("type", "text")  # "text" | "image" | "audio"

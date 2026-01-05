@@ -52,6 +52,7 @@ export default function Chat() {
     let retryCount = 0;
     const maxRetries = 5;
     let retryTimeout = null;
+    let pingInterval = null;
 
     // close previous socket if any
     if (ws.current) {
@@ -61,8 +62,18 @@ export default function Chat() {
     setIsConnecting(true);
     setIsConnected(false);
 
-    const connectWebSocket = () => {
+    const connectWebSocket = async () => {
       console.log(`Attempting WebSocket connection (attempt ${retryCount + 1})...`);
+      
+      // Wake up the server first with an HTTP request
+      try {
+        console.log("Waking up server...");
+        await fetch(`${backend}/`);
+        console.log("Server is awake");
+      } catch (e) {
+        console.log("Wake up request failed, trying WebSocket anyway...");
+      }
+
       const socket = new WebSocket(`${wsBackend}/chat/ws/${activeRoom}`);
       ws.current = socket;
 
@@ -71,16 +82,27 @@ export default function Chat() {
         setIsConnected(true);
         setIsConnecting(false);
         retryCount = 0; // reset on successful connection
+        
+        // Start ping keepalive every 25 seconds to prevent Render timeout
+        pingInterval = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+            console.log("Ping sent");
+          }
+        }, 25000);
       };
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+        // Ignore pong responses
+        if (data.type === "pong") return;
         setMessages((prev) => [...prev, { ...data, isOwn: data.user === username }]);
       };
 
       socket.onclose = (e) => {
         console.log("WS closed", e.code, e.reason);
         setIsConnected(false);
+        if (pingInterval) clearInterval(pingInterval);
         
         // Auto-retry if not intentionally closed
         if (retryCount < maxRetries) {
@@ -103,12 +125,13 @@ export default function Chat() {
 
     return () => {
       if (retryTimeout) clearTimeout(retryTimeout);
+      if (pingInterval) clearInterval(pingInterval);
       if (ws.current) {
         ws.current.onclose = null; // prevent retry on intentional close
         ws.current.close();
       }
     };
-  }, [activeRoom, username, wsBackend]);
+  }, [activeRoom, username, wsBackend, backend]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
