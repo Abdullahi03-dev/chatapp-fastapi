@@ -29,8 +29,8 @@ export default function Chat() {
   // image upload loading state
   const [isUploading, setIsUploading] = useState(false);
 
-  const backend = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
-  const wsBackend = import.meta.env.VITE_WS_URL || "ws://127.0.0.1:8000";
+  const backend = import.meta.env.VITE_API_URL || "https://chatapp-fastapi-6pg7.onrender.com";
+  const wsBackend = import.meta.env.VITE_WS_URL || "wss://chatapp-fastapi-6pg7.onrender.com";
 
   // Fetch history when room changes
   useEffect(() => {
