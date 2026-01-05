@@ -55,7 +55,7 @@ export default function Auth() {
         navigate("/chat", { replace: true });
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || "Something went wrong!");
+      toast.error(err.response?.data?.detail || "Something went wrong!");
     } finally {
       setLoading(false);
     }

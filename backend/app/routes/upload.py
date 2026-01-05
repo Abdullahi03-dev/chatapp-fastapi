@@ -1,23 +1,11 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import cloudinary.uploader
-from app.cloudinary_config import cloudinary  # ensure this config file runs config on import
+# import app.cloudinary_config  # this runs the config on import
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
-# If your cloudinary_config.py doesn't run automatically on import,
-# you can call configure_cloudinary() here; otherwise omit.
-try:
-    cloudinary()
-except Exception:
-    # it's fine if your config is already executed in cloudinary_config.py
-    pass
-
 @router.post("/media")
 async def upload_media(file: UploadFile = File(...)):
-    """
-    Upload an image/audio/file to Cloudinary and return the secure_url.
-    Accepts images and audio files. For audio, Cloudinary needs resource_type='video' or 'raw' depending on account.
-    """
     try:
         filename = file.filename
         content_type = file.content_type or ""

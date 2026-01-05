@@ -1,52 +1,3 @@
-# from fastapi import APIRouter, Depends, HTTPException
-# from sqlalchemy.orm import Session
-# from passlib.context import CryptContext
-# from jose import jwt
-# from datetime import datetime, timedelta
-# from app import model, database
-# from app.schema import RegisterSchema, LoginSchema  # import your schemas
-
-# router = APIRouter(prefix="/auth", tags=["Auth"])
-# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-# SECRET_KEY = "secret123"
-# ALGORITHM = "HS256"
-
-# def get_db():
-#     db = database.SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-
-# @router.post("/register")
-# def register(data: RegisterSchema, db: Session = Depends(get_db)):
-#     existing_user = db.query(model.User).filter(model.User.email == data.email).first()
-#     if existing_user:
-#         raise HTTPException(status_code=400, detail="Email already registered")
-
-#     hashed = pwd_context.hash(data.password)
-#     user = model.User(name=data.name, email=data.email, password=hashed)
-#     db.add(user)
-#     db.commit()
-#     return {"msg": "User created successfully"}
-
-# @router.post("/login")
-# def login(data: LoginSchema, db: Session = Depends(get_db)):
-#     user = db.query(model.User).filter(model.User.email == data.email).first()
-#     if not user or not pwd_context.verify(data.password, user.password):
-#         raise HTTPException(status_code=400, detail="Invalid email or password")
-
-#     token_data = {
-#         "sub": user.email,
-#         "name": user.name,
-#         "exp": datetime.utcnow() + timedelta(hours=2)
-#     }
-#     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-#     return {"access_token": token, "user": {"name": user.name, "email": user.email} ,'name':user.name}
-
-
-
-# app/routes/auth.py
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -57,7 +8,7 @@ from app.schema import RegisterSchema, LoginSchema
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
 
 def get_db():

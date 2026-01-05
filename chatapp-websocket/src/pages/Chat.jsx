@@ -1,8 +1,9 @@
 // src/pages/Chat.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, Code2, Gamepad2, Send } from "lucide-react";
+import { MessageSquare, Code2, Gamepad2, Send, Menu, X } from "lucide-react";
 import api from "../api"; // axios instance, baseURL set
+import toast from "react-hot-toast";
 
 const rooms = [
   { id: "General", name: "General", icon: MessageSquare },
@@ -22,6 +23,11 @@ export default function Chat() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const [isRecording, setIsRecording] = useState(false);
+  
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // image upload loading state
+  const [isUploading, setIsUploading] = useState(false);
 
   const backend = "http://127.0.0.1:8000";
 
@@ -81,6 +87,8 @@ export default function Chat() {
 
     const fd = new FormData();
     fd.append("file", file);
+    setIsUploading(true);
+    toast.loading("Uploading image...", { id: "upload" });
 
     try {
       const res = await api.post("/upload/media", fd, {
@@ -88,10 +96,12 @@ export default function Chat() {
       });
       const url = res.data.url;
       ws.current.send(JSON.stringify({ user: username, content: url, type: "image" }));
+      toast.success("Image sent!", { id: "upload" });
     } catch (err) {
       console.error("Upload failed", err);
-      alert("Image upload failed");
+      toast.error("Image upload failed", { id: "upload" });
     } finally {
+      setIsUploading(false);
       e.target.value = ""; // reset input
     }
   };
@@ -99,38 +109,49 @@ export default function Chat() {
   // AUDIO RECORDING & UPLOAD
   const startRecording = async () => {
     if (!navigator.mediaDevices) {
-      alert("Recording not supported on this browser");
+      toast.error("Recording not supported on this browser");
       return;
     }
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mr = new MediaRecorder(stream);
-    mediaRecorderRef.current = mr;
-    audioChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      mediaRecorderRef.current = mr;
+      audioChunksRef.current = [];
 
-    mr.ondataavailable = (ev) => {
-      if (ev.data.size > 0) audioChunksRef.current.push(ev.data);
-    };
+      mr.ondataavailable = (ev) => {
+        if (ev.data.size > 0) audioChunksRef.current.push(ev.data);
+      };
 
-    mr.onstop = async () => {
-      const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-      const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
-      const fd = new FormData();
-      fd.append("file", file);
+      mr.onstop = async () => {
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const file = new File([blob], `voice-${Date.now()}.webm`, { type: "audio/webm" });
+        const fd = new FormData();
+        fd.append("file", file);
 
-      try {
-        const res = await api.post("/upload/media", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        const url = res.data.url;
-        ws.current.send(JSON.stringify({ user: username, content: url, type: "audio" }));
-      } catch (err) {
-        console.error("Audio upload failed", err);
-        alert("Audio upload failed");
-      }
-    };
+        toast.loading("Sending audio...", { id: "audio-upload" });
+        try {
+          const res = await api.post("/upload/media", fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+          const url = res.data.url;
+          ws.current.send(JSON.stringify({ user: username, content: url, type: "audio" }));
+          toast.success("Audio sent!", { id: "audio-upload" });
+        } catch (err) {
+          console.error("Audio upload failed", err);
+          toast.error("Audio upload failed", { id: "audio-upload" });
+        }
+      };
 
-    mr.start();
-    setIsRecording(true);
+      mr.start();
+      setIsRecording(true);
+      toast.success("Recording started...");
+    } catch (err) {
+      console.error("Microphone access denied", err);
+      toast.error("Microphone access denied");
+    }
   };
 
   const stopRecording = () => {
@@ -144,10 +165,26 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen bg-gray-50 dark:bg-neutral-900 text-gray-900 dark:text-gray-100 overflow-hidden">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden" 
+          onClick={() => setSidebarOpen(false)} 
+        />
+      )}
+      
       {/* LEFT SIDEBAR */}
-      <aside className="w-64 bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700">
-        <div className="p-4 border-b border-gray-200 dark:border-neutral-700">
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 w-64 bg-white dark:bg-neutral-800 border-r border-gray-200 dark:border-neutral-700 transform transition-transform duration-300 ease-in-out ${
+        sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      }`}>
+        <div className="p-4 border-b border-gray-200 dark:border-neutral-700 flex items-center justify-between">
           <h2 className="text-xl font-bold text-[#f37925]">Rooms</h2>
+          <button 
+            onClick={() => setSidebarOpen(false)} 
+            className="md:hidden p-1 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
         <div className="p-3 space-y-2 overflow-y-auto h-[calc(100vh-64px)]">
           {rooms.map((room) => {
@@ -155,7 +192,10 @@ export default function Chat() {
             return (
               <button
                 key={room.id}
-                onClick={() => setActiveRoom(room.id)}
+                onClick={() => {
+                  setActiveRoom(room.id);
+                  setSidebarOpen(false);
+                }}
                 className={`flex items-center gap-3 p-3 rounded-lg w-full ${
                   activeRoom === room.id
                     ? "bg-[#f37925] text-white"
@@ -172,12 +212,18 @@ export default function Chat() {
 
       {/* CHAT SECTION */}
       <div className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex items-center px-6 justify-between">
+        <header className="h-16 border-b border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 flex items-center px-4 md:px-6 justify-between">
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setSidebarOpen(true)} 
+              className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
             <currentRoom.icon className="w-6 h-6 text-[#f37925]" />
-            <h1 className="ml-3 text-lg font-bold">{currentRoom.name}</h1>
+            <h1 className="text-lg font-bold">{currentRoom.name}</h1>
           </div>
-          <div className="text-sm text-gray-600">Signed in as <b>{username}</b></div>
+          <div className="text-sm text-gray-600 hidden sm:block">Signed in as <b>{username}</b></div>
         </header>
 
         {/* MESSAGES */}
@@ -200,7 +246,7 @@ export default function Chat() {
 
                 {/* Render by type */}
                 {msg.type === "image" && (
-                  <img src={msg.content} alt="sent" className="max-w-full rounded-md" />
+                  <img src={msg.content} alt="sent" className="max-w-[200px] md:max-w-[280px] rounded-md" />
                 )}
 
                 {msg.type === "audio" && (
@@ -234,11 +280,25 @@ export default function Chat() {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M3 19c0 1.054.895 2 2 2h14" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path><path d="M8.5 11.5l2.5 3.01L14.5 11" stroke="#111827" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path></svg>
             </label>
 
-            {/* Audio record controls */}
+            {/* Audio record button */}
             {!isRecording ? (
-              <button type="button" onClick={startRecording} className="rounded-full bg-white border p-2">Rec</button>
+              <button 
+                type="button" 
+                onClick={startRecording} 
+                className="rounded-full bg-white border p-2 hover:bg-gray-100"
+                title="Record audio"
+              >
+                🎤
+              </button>
             ) : (
-              <button type="button" onClick={stopRecording} className="rounded-full bg-red-500 text-white p-2">Stop</button>
+              <button 
+                type="button" 
+                onClick={stopRecording} 
+                className="rounded-full bg-red-500 text-white p-2 animate-pulse"
+                title="Stop recording"
+              >
+                ⏹️
+              </button>
             )}
 
             <button type="submit" className="rounded-full bg-[#f37925] text-white p-3">
