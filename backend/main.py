@@ -14,6 +14,7 @@ origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://chatapp-fastapi-6pg7.onrender.com",
+    "https://talkzoneapp.vercel.app",
 ]
 
 # Add frontend URL from env if provided
